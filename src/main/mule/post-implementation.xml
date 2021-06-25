@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="post-implementationSub_Flow" doc:id="b6249421-7f55-486d-a67c-75d0bee949a8" >
+		<ee:transform doc:name="Transform Message" doc:id="ea3f3140-cb2e-41c8-a849-30bd54683af6" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="result" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"vehicles": {},
+	"drivers": {},
+	"incidents": {},
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="6d3fa289-4ade-4e3a-bc2b-430eb3056a21" >
+			<route >
+				<mongo:find-documents collectionName="col_lrqi_incidents" fields="," doc:name="GET Incidents" doc:id="2457deb4-ae10-4082-a610-95375557a9e6" config-ref="MongoDB_Config1">
+					<mongo:query ><![CDATA[{"quoteId": "258500"}]]></mongo:query>
+				</mongo:find-documents>
+				<ee:transform doc:name="Transform Message" doc:id="a5579b18-c6a9-4362-88fc-4ad2f526fcb5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"incidents": payload[0].payload,
+	"drivers": payload[1].payload,
+	"vehicles": payload[2].payload,
+}]]></ee:set-payload>
+			</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="result" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.result ++ {"incidents": payload}]]></ee:set-variable>
+					</ee:variables>
+		</ee:transform>
+			</route>
+			<route >
+				<mongo:find-documents collectionName="col_lrqi_drivers" fields="," doc:name="GET Drivers" doc:id="98f7cbb7-5925-4bca-8c76-599976741870" config-ref="MongoDB_Config1">
+					<mongo:query><![CDATA[{"quoteId": "258500"}]]></mongo:query>
+				</mongo:find-documents>
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="daa8e68e-3f2c-4a1f-8d85-4273374b090e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"incidents": payload[0].payload,
+	"drivers": payload[1].payload,
+	"vehicles": payload[2].payload,
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="result" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.result ++ {"drivers": payload}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</route>
+			<route >
+				<mongo:find-documents collectionName="col_lrqi_vehicles" fields="," doc:name="GET Vehicles" doc:id="4c3f5352-ae95-451a-b9c5-ac470a5064d3" config-ref="MongoDB_Config1">
+			<mongo:query><![CDATA[{"quoteId": "258500"}]]></mongo:query>
+		</mongo:find-documents>
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="2492e449-c7b6-47c1-b83c-c6245f4b2163">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"incidents": payload[0].payload,
+	"drivers": payload[1].payload,
+	"vehicles": payload[2].payload,
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="result"><![CDATA[%dw 2.0
+output application/json
+---
+vars.result ++ {"vehicles": payload}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="5eb9ecbc-02ad-4ea1-be44-f9e2272489a2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.result]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>
